@@ -30,6 +30,14 @@ func jsonResponse(endpoint string) []byte {
 		"/redfish/v1/UpdateService": fixturesDir + "/v1/updateservice.json",
 		"/redfish/v1/Systems":       fixturesDir + "/v1/systems.json",
 
+		"/redfish/v1/Managers":                                            fixturesDir + "/v1/dell/managers.json",
+		"/redfish/v1/Managers/iDRAC.Embedded.1":                           fixturesDir + "/v1/dell/manager.idrac.embedded.1.json",
+		"/redfish/v1/Managers/iDRAC.Embedded.1/LogServices":               fixturesDir + "/v1/dell/logservices.json",
+		"/redfish/v1/Managers/iDRAC.Embedded.1/LogServices/Sel":           fixturesDir + "/v1/dell/logservices.sel.json",
+		"/redfish/v1/Managers/iDRAC.Embedded.1/LogServices/Sel/Entries":   fixturesDir + "/v1/dell/entries.json",
+		"/redfish/v1/Managers/iDRAC.Embedded.1/LogServices/Sel/Entries/1": fixturesDir + "/v1/dell/selentries/1.json",
+		"/redfish/v1/Managers/iDRAC.Embedded.1/LogServices/Sel/Entries/2": fixturesDir + "/v1/dell/selentries/2.json",
+
 		"/redfish/v1/Systems/System.Embedded.1":                                    fixturesDir + "/v1/dell/system.embedded.1.json",
 		"/redfish/v1/Systems/System.Embedded.1/Bios":                               fixturesDir + "/v1/dell/bios.json",
 		"/redfish/v1/Managers/iDRAC.Embedded.1/Oem/Dell/Jobs?$expand=*($levels=1)": fixturesDir + "/v1/dell/jobs.json",
@@ -60,6 +68,7 @@ func TestMain(m *testing.M) {
 		handler.HandleFunc("/redfish/v1/UpdateService/MultipartUpload", multipartUpload)
 		handler.HandleFunc("/redfish/v1/Managers/iDRAC.Embedded.1/Oem/Dell/Jobs?$expand=*($levels=1)", dellJobs)
 		handler.HandleFunc("/redfish/v1/TaskService/Tasks/", openbmcStatus)
+		handler.HandleFunc("/redfish/v1/Managers/iDRAC.Embedded.1/LogServices/Sel/Entries", dellSystemEventLog)
 
 		return httptest.NewTLSServer(handler)
 	}()
@@ -96,4 +105,12 @@ func sessionService(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Auth-Token", "hunter2")
 	w.Header().Set("Location", r.URL.String())
 	_, _ = w.Write([]byte(`is cool`))
+}
+
+func dellSystemEventLog(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusNotFound)
+	}
+
+	_, _ = w.Write(jsonResponse(r.RequestURI))
 }
